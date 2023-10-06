@@ -43,7 +43,7 @@ jobs:
       if : startsWith(github.event.inputs.version, '4')
       run: |
         ./host/generate-composite.sh -r all
-        zip -r ${{ github.event.inputs.version }}.zip ./host/bullseye/amd64/release/
+        zip -r ${{ github.event.inputs.version }}.zip ./host/amd64/release/
     - name: Attach Assets to Release
       uses: actions/upload-release-asset@v1
       env:
