@@ -4,9 +4,11 @@ ARG JDK_NAME=jdk8u362-b09
 ARG JAVA_HOME=/usr/lib/jvm/adoptium-8-x64
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS runtime-image
 ARG HOST_VERSION
+ARG EXTENSION_BUNDLE_VERSION
 ARG JAVA_VERSION
 ARG JDK_NAME
 ARG JAVA_HOME
+ARG EXTENSION_BUNDLE_CDN_URL=https://functionscdn.azureedge.net/public
 
 ENV PublishWithAspNetCoreTargetManifest=false
 
@@ -20,13 +22,12 @@ RUN BUILD_NUMBER=$(echo ${HOST_VERSION} | cut -d'.' -f 3) && \
 
 RUN apt-get update && \
     apt-get install -y gnupg wget unzip && \
-    EXTENSION_BUNDLE_VERSION_V4=4.9.0 && \
-    EXTENSION_BUNDLE_FILENAME_V4=Microsoft.Azure.Functions.ExtensionBundle.${EXTENSION_BUNDLE_VERSION_V4}_linux-x64.zip && \
-    wget https://functionscdn.azureedge.net/public/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/$EXTENSION_BUNDLE_VERSION_V4/$EXTENSION_BUNDLE_FILENAME_V4 && \
-    mkdir -p /FuncExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/$EXTENSION_BUNDLE_VERSION_V4 && \
-    unzip /$EXTENSION_BUNDLE_FILENAME_V4 -d /FuncExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle/$EXTENSION_BUNDLE_VERSION_V4 && \
+    EXTENSION_BUNDLE_FILENAME_V4=Microsoft.Azure.Functions.ExtensionBundle.Workflows.${EXTENSION_BUNDLE_VERSION}_any-any.zip && \
+    wget $EXTENSION_BUNDLE_CDN_URL/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION/$EXTENSION_BUNDLE_FILENAME_V4 && \
+    mkdir -p /home/data/Functions/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION && \
+    unzip /$EXTENSION_BUNDLE_FILENAME_V4 -d /home/data/Functions/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION && \
     rm -f /$EXTENSION_BUNDLE_FILENAME_V4 &&\
-    find /FuncExtensionBundles/ -type f -exec chmod 644 {} \;
+    find /home/data/Functions/ExtensionBundles/ -type f -exec chmod 644 {} \;
 
 RUN wget https://github.com/adoptium/temurin8-binaries/releases/download/${JDK_NAME}/OpenJDK8U-jdk_x64_linux_hotspot_${JAVA_VERSION}.tar.gz && \
     mkdir -p ${JAVA_HOME} && \
@@ -50,7 +51,13 @@ ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     HOST_VERSION=${HOST_VERSION} \
     ASPNETCORE_CONTENTROOT=/azure-functions-host \
-    JAVA_HOME=${JAVA_HOME}
+    JAVA_HOME=${JAVA_HOME} \
+    AzureFunctionsJobHost__extensionBundle__id=Microsoft.Azure.Functions.ExtensionBundle.Workflows \
+    AzureFunctionsJobHost__extensionBundle__version=[1.*,2.0.0) \
+    APP_KIND=workflowApp \
+    FUNCTIONS_EXTENSION_VERSION=~4 \
+    AzureFunctionsJobHost__Logging__Console__IsEnabled=true \
+    FUNCTIONS_RUNTIME_SCALE_MONITORING_ENABLED=1 
 
 # Fix from https://github.com/GoogleCloudPlatform/google-cloud-dotnet-powerpack/issues/22#issuecomment-729895157
 RUN apt-get update && \
@@ -74,7 +81,7 @@ COPY --from=runtime-image [ "/azure-functions-host", "/azure-functions-host" ]
 COPY --from=runtime-image [ "/workers/java", "/azure-functions-host/workers/java" ]
 COPY --from=runtime-image [ "/workers/node", "/azure-functions-host/workers/node" ]
 COPY --from=runtime-image [ "${JAVA_HOME}", "${JAVA_HOME}" ]
-COPY --from=runtime-image [ "/FuncExtensionBundles", "/FuncExtensionBundles" ]
+COPY --from=runtime-image [ "/home/data/Functions/ExtensionBundles", "/home/data/Functions/ExtensionBundles" ]
 COPY --from=aspnet6 [ "/usr/share/dotnet", "/usr/share/dotnet" ]
 
 CMD [ "/azure-functions-host/Microsoft.Azure.WebJobs.Script.WebHost" ]
