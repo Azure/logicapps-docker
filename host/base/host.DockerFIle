@@ -12,6 +12,32 @@ ARG EXTENSION_BUNDLE_CDN_URL=https://functionscdn.azureedge.net/public
 
 ENV PublishWithAspNetCoreTargetManifest=false
 
+RUN if [ "$EXTENSION_BUNDLE_CDN_URL" != "https://functionscdn.azureedge.net/public" ] && [ -z "$EXTENSION_BUNDLE_VERSION" ]; then \
+        echo 'Error: EXTENSION_BUNDLE_VERSION must be set when EXTENSION_BUNDLE_CDN_URL is not "https://functionscdn.azureedge.net/public"' && exit 1; \
+    fi
+
+RUN apt-get update && apt-get install -y curl jq gnupg wget unzip
+RUN curl -o response.json "${EXTENSION_BUNDLE_CDN_URL}/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/index.json"
+
+RUN if [ -z "$EXTENSION_BUNDLE_VERSION" ]; then \
+        EXTENSION_BUNDLE_VERSION=$(jq -r 'max_by(. | split(".") | map(tonumber))' response.json); \
+        echo "Using version: $EXTENSION_BUNDLE_VERSION"; \
+        EXTENSION_BUNDLE_FILENAME_V4=Microsoft.Azure.Functions.ExtensionBundle.Workflows.${EXTENSION_BUNDLE_VERSION}_any-any.zip; \
+        wget $EXTENSION_BUNDLE_CDN_URL/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION/$EXTENSION_BUNDLE_FILENAME_V4; \
+        mkdir -p /home/data/Functions/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION; \
+        unzip /$EXTENSION_BUNDLE_FILENAME_V4 -d /home/data/Functions/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION; \
+        rm -f /$EXTENSION_BUNDLE_FILENAME_V4; \
+    else \
+        echo "Using version: $EXTENSION_BUNDLE_VERSION"; \
+        EXTENSION_BUNDLE_FILENAME_V4=Microsoft.Azure.Functions.ExtensionBundle.Workflows.${EXTENSION_BUNDLE_VERSION}_any-any.zip; \
+        wget $EXTENSION_BUNDLE_CDN_URL/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION/$EXTENSION_BUNDLE_FILENAME_V4; \
+        mkdir -p /home/data/Functions/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION; \
+        unzip /$EXTENSION_BUNDLE_FILENAME_V4 -d /home/data/Functions/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION; \
+        rm -f /$EXTENSION_BUNDLE_FILENAME_V4; \
+    fi
+
+RUN find /home/data/Functions/ExtensionBundles/ -type f -exec chmod 644 {} \;
+
 RUN BUILD_NUMBER=$(echo ${HOST_VERSION} | cut -d'.' -f 3) && \
     git clone --branch v${HOST_VERSION} https://github.com/Azure/azure-functions-host /src/azure-functions-host && \
     cd /src/azure-functions-host && \
@@ -19,15 +45,6 @@ RUN BUILD_NUMBER=$(echo ${HOST_VERSION} | cut -d'.' -f 3) && \
     dotnet publish -v q /p:BuildNumber=$BUILD_NUMBER /p:CommitHash=$HOST_COMMIT src/WebJobs.Script.WebHost/WebJobs.Script.WebHost.csproj -c Release --output /azure-functions-host --runtime linux-x64 && \
     mv /azure-functions-host/workers /workers && mkdir /azure-functions-host/workers && \
     rm -rf /root/.local /root/.nuget /src
-
-RUN apt-get update && \
-    apt-get install -y gnupg wget unzip && \
-    EXTENSION_BUNDLE_FILENAME_V4=Microsoft.Azure.Functions.ExtensionBundle.Workflows.${EXTENSION_BUNDLE_VERSION}_any-any.zip && \
-    wget $EXTENSION_BUNDLE_CDN_URL/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION/$EXTENSION_BUNDLE_FILENAME_V4 && \
-    mkdir -p /home/data/Functions/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION && \
-    unzip /$EXTENSION_BUNDLE_FILENAME_V4 -d /home/data/Functions/ExtensionBundles/Microsoft.Azure.Functions.ExtensionBundle.Workflows/$EXTENSION_BUNDLE_VERSION && \
-    rm -f /$EXTENSION_BUNDLE_FILENAME_V4 &&\
-    find /home/data/Functions/ExtensionBundles/ -type f -exec chmod 644 {} \;
 
 RUN wget https://github.com/adoptium/temurin8-binaries/releases/download/${JDK_NAME}/OpenJDK8U-jdk_x64_linux_hotspot_${JAVA_VERSION}.tar.gz && \
     mkdir -p ${JAVA_HOME} && \
