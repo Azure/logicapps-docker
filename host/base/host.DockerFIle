@@ -74,7 +74,8 @@ ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     APP_KIND=workflowApp \
     FUNCTIONS_EXTENSION_VERSION=~4 \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true \
-    FUNCTIONS_RUNTIME_SCALE_MONITORING_ENABLED=1 
+    FUNCTIONS_RUNTIME_SCALE_MONITORING_ENABLED=1 \
+    MANAGED_ENVIRONMENT=true 
 
 # Fix from https://github.com/GoogleCloudPlatform/google-cloud-dotnet-powerpack/issues/22#issuecomment-729895157
 RUN apt-get update && \
