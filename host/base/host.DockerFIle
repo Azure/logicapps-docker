@@ -92,7 +92,7 @@ RUN apt-get install -y ca-certificates fonts-liberation libasound2 libatk-bridge
     libnss3 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 \
     libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 lsb-release wget xdg-utils
 
-RUN curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin -Channel 6.0 -Runtime dotnet -InstallDir /usr/share/dotnet \
+RUN curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin -Channel 8.0 -Runtime dotnet -InstallDir /usr/share/dotnet \
     && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
 
 COPY --from=runtime-image [ "/azure-functions-host", "/azure-functions-host" ]
