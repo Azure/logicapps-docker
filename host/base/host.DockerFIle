@@ -2,7 +2,7 @@ ARG HOST_VERSION=4.27.3
 ARG JAVA_VERSION=8u362b09
 ARG JDK_NAME=jdk8u362-b09
 ARG JAVA_HOME=/usr/lib/jvm/adoptium-8-x64
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS runtime-image
+FROM mcr.microsoft.com/dotnet/sdk:6.0-jammy AS runtime-image
 ARG HOST_VERSION
 ARG EXTENSION_BUNDLE_VERSION
 ARG JAVA_VERSION
@@ -51,9 +51,9 @@ RUN wget https://github.com/adoptium/temurin8-binaries/releases/download/${JDK_N
     tar -xzf OpenJDK8U-jdk_x64_linux_hotspot_${JAVA_VERSION}.tar.gz -C ${JAVA_HOME} --strip-components=1 && \
     rm -f OpenJDK8U-jdk_x64_linux_hotspot_${JAVA_VERSION}.tar.gz
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS aspnet6
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-jammy AS aspnet6
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:6.0
+FROM mcr.microsoft.com/dotnet/runtime-deps:6.0-jammy
 ARG HOST_VERSION
 ARG JAVA_HOME
 
