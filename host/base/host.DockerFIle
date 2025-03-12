@@ -8,12 +8,12 @@ ARG EXTENSION_BUNDLE_VERSION
 ARG JAVA_VERSION
 ARG JDK_NAME
 ARG JAVA_HOME
-ARG EXTENSION_BUNDLE_CDN_URL=https://functionscdn.azureedge.net/public
+ARG EXTENSION_BUNDLE_CDN_URL=https://cdn.functions.azure.com/public
 
 ENV PublishWithAspNetCoreTargetManifest=false
 
-RUN if [ "$EXTENSION_BUNDLE_CDN_URL" != "https://functionscdn.azureedge.net/public" ] && [ -z "$EXTENSION_BUNDLE_VERSION" ]; then \
-        echo 'Error: EXTENSION_BUNDLE_VERSION must be set when EXTENSION_BUNDLE_CDN_URL is not "https://functionscdn.azureedge.net/public"' && exit 1; \
+RUN if [ "$EXTENSION_BUNDLE_CDN_URL" != "https://cdn.functions.azure.com/public" ] && [ -z "$EXTENSION_BUNDLE_VERSION" ]; then \
+        echo 'Error: EXTENSION_BUNDLE_VERSION must be set when EXTENSION_BUNDLE_CDN_URL is not "https://cdn.functions.azure.com/public"' && exit 1; \
     fi
 
 RUN apt-get update && apt-get install -y curl jq gnupg wget unzip
