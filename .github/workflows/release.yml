@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
       with:
         ref: dev
         fetch-depth: 0
@@ -34,7 +34,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.PIPELINE_ADMIN }}  
     - name: Release Drafter
       id: release
-      uses: release-drafter/release-drafter@v5.15.0
+      uses: release-drafter/release-drafter@fe52e97d262833ae07d05efaf1a239df3f1b5cd4 # v5.15.0
       with:
         tag: ${{ github.event.inputs.version }}
       env:
@@ -45,7 +45,7 @@ jobs:
         ./host/generate-composite.sh -r all
         zip -r ${{ github.event.inputs.version }}.zip ./host/amd64/release/
     - name: Attach Assets to Release
-      uses: actions/upload-release-asset@v1
+      uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
